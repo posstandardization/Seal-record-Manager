@@ -75,6 +75,14 @@
         .modal-overlay.active { display: flex; }
         
         #lockScreen { background: #1e293b; color: white; }
+        
+        .login-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-align: center;
+        }
+        .login-input::placeholder { color: rgba(255, 255, 255, 0.5); }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -85,8 +93,8 @@
                 <p class="text-xs text-gray-500 font-medium italic">نظام تسجيل الأختام</p>
             </div>
             <button onclick="lockApp()" class="btn btn-warning py-2">
-                <span>LOCK</span>
-                <span>قفل</span>
+                <span>LOGOUT</span>
+                <span>تسجيل الخروج</span>
             </button>
         </header>
 
@@ -173,17 +181,28 @@
         </div>
     </div>
 
-    <!-- Lock Screen Modal -->
+    <!-- Login/Lock Screen Modal -->
     <div id="lockScreen" class="modal-overlay">
-        <div class="text-center p-8 flex flex-col items-center">
+        <div class="text-center p-8 flex flex-col items-center w-full max-w-sm">
             <div class="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             </div>
-            <h2 class="text-3xl font-bold mb-2">APP LOCKED</h2>
-            <p class="text-slate-400 mb-8">التطبيق مقفل</p>
-            <button onclick="unlockApp()" class="btn btn-warning px-12 py-4 text-lg">
-                <span>UNLOCK</span>
-                <span>فتح القفل</span>
+            <h2 class="text-3xl font-bold mb-1">LOGIN</h2>
+            <p class="text-slate-400 mb-8">تسجيل الدخول</p>
+            
+            <div class="w-full space-y-4 mb-8">
+                <div>
+                    <input type="text" id="loginUser" class="input-field login-input" placeholder="User / المستخدم">
+                </div>
+                <div>
+                    <input type="password" id="loginPass" class="input-field login-input" placeholder="Password / كلمة السر">
+                </div>
+                <div id="loginError" class="text-red-400 text-xs hidden">Invalid credentials / بيانات غير صحيحة</div>
+            </div>
+
+            <button onclick="handleLogin()" class="btn btn-warning w-full py-4 text-lg">
+                <span>LOGIN</span>
+                <span>دخول</span>
             </button>
         </div>
     </div>
@@ -239,7 +258,7 @@
             localStorage.setItem('seal_records', JSON.stringify(entries));
         }
 
-        // --- LOCK LOGIC ---
+        // --- AUTH/LOCK LOGIC ---
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
             if (!document.getElementById('lockScreen').classList.contains('active')) {
@@ -250,6 +269,22 @@
         function lockApp() {
             document.getElementById('lockScreen').classList.add('active');
             localStorage.setItem('app_locked', 'true');
+            // Clear inputs on lock
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('loginUser').value;
+            const p = document.getElementById('loginPass').value;
+            const errorEl = document.getElementById('loginError');
+
+            if (u === '12345' && p === '12345') {
+                unlockApp();
+            } else {
+                errorEl.classList.remove('hidden');
+            }
         }
 
         function unlockApp() {
@@ -395,8 +430,15 @@
             document.addEventListener(event, resetInactivityTimer, true);
         });
 
-        // Handle initial lock state
-        if (localStorage.getItem('app_locked') === 'true') {
+        // Add Enter key listener for login
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && document.getElementById('lockScreen').classList.contains('active')) {
+                handleLogin();
+            }
+        });
+
+        // Handle initial lock state (Always lock on fresh load or if previously locked)
+        if (localStorage.getItem('app_locked') !== 'false') {
             lockApp();
         } else {
             resetInactivityTimer();
