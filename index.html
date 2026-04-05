@@ -61,7 +61,6 @@
         
         .table-container { max-height: 400px; overflow-y: auto; }
         
-        /* Modal Styles */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -98,37 +97,15 @@
             </button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- Container No. -->
-            <div class="card p-4">
-                <label class="block font-semibold text-gray-700 text-sm">Container No. / رقم الحاوية</label>
-                <input type="text" id="containerNo" class="input-field uppercase-input" placeholder="e.g. MSCU1234567">
-                <button onclick="clearField('containerNo')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
-            </div>
-
-            <!-- Old Seal -->
-            <div class="card p-4">
-                <label class="block font-semibold text-gray-700 text-sm">Old Seal / الختم القديم</label>
-                <input type="text" id="oldSeal" class="input-field uppercase-input" placeholder="Old Seal ID">
-                <button onclick="clearField('oldSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
-            </div>
-
-            <!-- New Seal -->
-            <div class="card p-4">
-                <label class="block font-semibold text-gray-700 text-sm">New Seal / الختم الجديد</label>
-                <input type="text" id="newSeal" class="input-field uppercase-input" placeholder="New Seal ID">
-                <button onclick="clearField('newSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
-            </div>
-        </div>
-
+        <!-- Top Section -->
         <div class="card p-5 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-600">Date / التاريخ</label>
+                    <label class="block text-sm font-semibold text-gray-700">Date / التاريخ</label>
                     <input type="date" id="recordDate" class="input-field">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-600">Shift / الوردية</label>
+                    <label class="block text-sm font-semibold text-gray-700">Shift / الوردية</label>
                     <select id="shift" class="input-field">
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -136,8 +113,35 @@
                         <option value="4">4</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Staff ID / رقم الموظف</label>
+                    <input type="text" id="staffId" class="input-field" placeholder="Enter Staff ID">
+                </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-6">
+        </div>
+
+        <!-- Middle Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="card p-4">
+                <label class="block font-semibold text-gray-700 text-sm">Container No. / رقم الحاوية</label>
+                <input type="text" id="containerNo" class="input-field uppercase-input" placeholder="e.g. MSCU1234567">
+                <button onclick="clearField('containerNo')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
+            </div>
+            <div class="card p-4">
+                <label class="block font-semibold text-gray-700 text-sm">Old Seal / الختم القديم</label>
+                <input type="text" id="oldSeal" class="input-field uppercase-input" placeholder="Old Seal ID">
+                <button onclick="clearField('oldSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
+            </div>
+            <div class="card p-4">
+                <label class="block font-semibold text-gray-700 text-sm">New Seal / الختم الجديد</label>
+                <input type="text" id="newSeal" class="input-field uppercase-input" placeholder="New Seal ID">
+                <button onclick="clearField('newSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card p-5 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <button onclick="addEntry()" id="addBtn" class="btn btn-primary col-span-2 md:col-span-1">
                     <span>SAVE</span>
                     <span>حفظ</span>
@@ -146,7 +150,7 @@
                     <span>EXCEL</span>
                     <span>إكسل</span>
                 </button>
-                <button onclick="openShareModal()" id="shareBtn" class="btn btn-info disabled:opacity-50" disabled>
+                <button onclick="handleShare()" id="shareBtn" class="btn btn-info disabled:opacity-50" disabled>
                     <span>SHARE</span>
                     <span>مشاركة</span>
                 </button>
@@ -159,6 +163,7 @@
 
         <div id="statusMsg" class="hidden mb-4 p-3 rounded-lg text-center font-medium shadow-sm transition-all duration-300"></div>
 
+        <!-- Table Display -->
         <div class="card p-5">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-gray-700">Records / السجلات</h2>
@@ -168,10 +173,10 @@
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-gray-50 sticky top-0">
                         <tr>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">DATE/SHIFT التاريخ والوردية</th>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">CONTAINER الحاوية</th>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">OLD SEAL الختم القديم</th>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">NEW SEAL الختم الجديد</th>
+                            <th class="p-3 border-b text-[10px] font-bold text-gray-600 uppercase">Details تفاصيل</th>
+                            <th class="p-3 border-b text-[10px] font-bold text-gray-600 uppercase">Container الحاوية</th>
+                            <th class="p-3 border-b text-[10px] font-bold text-gray-600 uppercase">Old Seal الختم القديم</th>
+                            <th class="p-3 border-b text-[10px] font-bold text-gray-600 uppercase">New Seal الختم الجديد</th>
                         </tr>
                     </thead>
                     <tbody id="entriesTableBody" class="text-sm"></tbody>
@@ -181,25 +186,19 @@
         </div>
     </div>
 
-    <!-- Login/Lock Screen Modal -->
+    <!-- Login Modal -->
     <div id="lockScreen" class="modal-overlay">
-        <div class="text-center p-8 flex flex-col items-center w-full max-w-sm">
+        <div class="text-center p-8 flex flex-col items-center w-full max-sm-sm">
             <div class="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             </div>
-            <h2 class="text-3xl font-bold mb-1">LOGIN</h2>
+            <h2 class="text-3xl font-bold mb-1 text-white">LOGIN</h2>
             <p class="text-slate-400 mb-8">تسجيل الدخول</p>
-            
             <div class="w-full space-y-4 mb-8">
-                <div>
-                    <input type="text" id="loginUser" class="input-field login-input" placeholder="User / المستخدم">
-                </div>
-                <div>
-                    <input type="password" id="loginPass" class="input-field login-input" placeholder="Password / كلمة السر">
-                </div>
+                <input type="text" id="loginUser" class="input-field login-input" placeholder="User / المستخدم">
+                <input type="password" id="loginPass" class="input-field login-input" placeholder="Password / كلمة السر">
                 <div id="loginError" class="text-red-400 text-xs hidden">Invalid credentials / بيانات غير صحيحة</div>
             </div>
-
             <button onclick="handleLogin()" class="btn btn-warning w-full py-4 text-lg">
                 <span>LOGIN</span>
                 <span>دخول</span>
@@ -214,7 +213,7 @@
                 <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
             <h3 class="text-xl font-bold mb-2">CAUTION / تنبيه</h3>
-            <p class="text-gray-600 mb-6">Are you sure you want to delete ALL records? This cannot be undone.<br><br>هل أنت متأكد من مسح جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <p class="text-gray-600 mb-6 text-sm">Are you sure you want to delete ALL records? This cannot be undone.<br><br>هل أنت متأكد من مسح جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.</p>
             <div class="flex gap-3">
                 <button onclick="clearAllData()" class="flex-1 btn btn-danger">YES / نعم</button>
                 <button onclick="closeClearModal()" class="flex-1 btn bg-gray-200 text-gray-700">NO / لا</button>
@@ -222,19 +221,38 @@
         </div>
     </div>
 
-    <!-- Share Modal -->
+    <!-- Share Options Modal -->
     <div id="shareModal" class="modal-overlay">
         <div class="bg-white p-8 rounded-2xl max-w-sm w-full mx-4 shadow-2xl">
-            <h3 class="text-xl font-bold mb-2 text-center">SHARE / مشاركة</h3>
-            <div class="space-y-3 mt-6">
+            <h3 class="text-xl font-bold mb-4 text-center text-gray-800">SHARE OPTIONS / خيارات المشاركة</h3>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                <p class="text-[10px] text-blue-800 font-bold mb-1">Notice / تنبيه:</p>
+                <p class="text-[10px] text-blue-700 leading-relaxed">
+                    If direct sharing is blocked by the browser, use the manual options below:<br>
+                    إذا تم حظر المشاركة المباشرة، استخدم الخيارات اليدوية أدناه:
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="exportToExcel(); closeShareModal();" class="w-full btn btn-success">
+                    <span>DOWNLOAD EXCEL</span>
+                    <span>تحميل ملف إكسل</span>
+                </button>
+                <button onclick="copySummary()" class="w-full btn btn-warning">
+                    <span>COPY SUMMARY</span>
+                    <span>نسخ الملخص</span>
+                </button>
                 <button onclick="shareData('whatsapp')" class="w-full btn bg-[#25D366] text-white">
-                    <span>WhatsApp / واتساب</span>
+                    <span>WHATSAPP</span>
+                    <span>واتساب</span>
                 </button>
                 <button onclick="shareData('email')" class="w-full btn bg-gray-800 text-white">
-                    <span>Email / بريد إلكتروني</span>
+                    <span>EMAIL</span>
+                    <span>بريد إلكتروني</span>
                 </button>
                 <button onclick="closeShareModal()" class="w-full btn bg-gray-100 text-gray-600">
-                    <span>Cancel / إلغاء</span>
+                    <span>CLOSE / إغلاق</span>
                 </button>
             </div>
         </div>
@@ -243,22 +261,15 @@
     <script>
         let entries = [];
         let inactivityTimer;
-        const INACTIVITY_LIMIT = 120000; // 2 minutes
+        const INACTIVITY_LIMIT = 120000;
 
-        // --- PERSISTENCE ---
         function loadData() {
             const saved = localStorage.getItem('seal_records');
-            if (saved) {
-                entries = JSON.parse(saved);
-                updateUI();
-            }
+            if (saved) { entries = JSON.parse(saved); updateUI(); }
         }
 
-        function saveData() {
-            localStorage.setItem('seal_records', JSON.stringify(entries));
-        }
+        function saveData() { localStorage.setItem('seal_records', JSON.stringify(entries)); }
 
-        // --- AUTH/LOCK LOGIC ---
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
             if (!document.getElementById('lockScreen').classList.contains('active')) {
@@ -269,22 +280,13 @@
         function lockApp() {
             document.getElementById('lockScreen').classList.add('active');
             localStorage.setItem('app_locked', 'true');
-            // Clear inputs on lock
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-            document.getElementById('loginError').classList.add('hidden');
         }
 
         function handleLogin() {
             const u = document.getElementById('loginUser').value;
             const p = document.getElementById('loginPass').value;
-            const errorEl = document.getElementById('loginError');
-
-            if (u === '12345' && p === '12345') {
-                unlockApp();
-            } else {
-                errorEl.classList.remove('hidden');
-            }
+            if (u === '12345' && p === '12345') { unlockApp(); } 
+            else { document.getElementById('loginError').classList.remove('hidden'); }
         }
 
         function unlockApp() {
@@ -293,31 +295,22 @@
             resetInactivityTimer();
         }
 
-        // --- ENTRY LOGIC ---
         window.addEntry = () => {
             const container = document.getElementById('containerNo').value.trim().toUpperCase();
             const oldS = document.getElementById('oldSeal').value.trim().toUpperCase();
             const newS = document.getElementById('newSeal').value.trim().toUpperCase();
+            const staff = document.getElementById('staffId').value.trim();
             const date = document.getElementById('recordDate').value;
             const shift = document.getElementById('shift').value;
 
-            if (!container || !oldS || !newS || !date) {
+            if (!container || !oldS || !newS || !date || !staff) {
                 showStatus('Missing fields! / حقول ناقصة', 'error');
                 return;
             }
 
-            const newEntry = { 
-                Date: date, 
-                Shift: shift, 
-                'Container No': container, 
-                'Old Seal': oldS, 
-                'New Seal': newS,
-                timestamp: Date.now()
-            };
-
+            const newEntry = { Date: date, Shift: shift, 'Staff ID': staff, 'Container No': container, 'Old Seal': oldS, 'New Seal': newS, timestamp: Date.now() };
             entries.unshift(newEntry);
             saveData();
-            
             ['containerNo', 'oldSeal', 'newSeal'].forEach(id => document.getElementById(id).value = '');
             updateUI();
             showStatus('Saved! / تم الحفظ', 'success');
@@ -328,47 +321,31 @@
             const empty = document.getElementById('emptyState');
             tbody.innerHTML = '';
             document.getElementById('recordCount').innerText = `${entries.length} Records`;
-            
             const hasData = entries.length > 0;
             document.getElementById('exportBtn').disabled = !hasData;
             document.getElementById('shareBtn').disabled = !hasData;
-            
-            if (!hasData) {
-                empty.classList.remove('hidden');
-            } else {
+            if (!hasData) { empty.classList.remove('hidden'); } 
+            else {
                 empty.classList.add('hidden');
                 entries.forEach(e => {
                     const tr = document.createElement('tr');
                     tr.className = "border-b hover:bg-gray-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="p-3 text-gray-500">${e.Date}<br><span class="text-[10px] font-bold text-gray-400">Shift ${e.Shift}</span></td>
-                        <td class="p-3 font-bold text-gray-800">${e['Container No']}</td>
-                        <td class="p-3 text-gray-600 font-mono">${e['Old Seal']}</td>
-                        <td class="p-3 text-blue-600 font-mono font-semibold">${e['New Seal']}</td>
-                    `;
+                    tr.innerHTML = `<td class="p-3 text-gray-500 leading-tight"><span class="block font-semibold">${e.Date}</span><span class="text-[10px] text-gray-400">Shift ${e.Shift}</span><br><span class="text-[10px] text-blue-500 font-bold">ID: ${e['Staff ID']}</span></td><td class="p-3 font-bold text-gray-800">${e['Container No']}</td><td class="p-3 text-gray-600 font-mono">${e['Old Seal']}</td><td class="p-3 text-blue-600 font-mono font-semibold">${e['New Seal']}</td>`;
                     tbody.appendChild(tr);
                 });
             }
         }
 
-        // --- CLEAR ALL LOGIC ---
         window.confirmClearAll = () => document.getElementById('clearModal').classList.add('active');
         window.closeClearModal = () => document.getElementById('clearModal').classList.remove('active');
-        
-        window.clearAllData = () => {
-            entries = [];
-            saveData();
-            updateUI();
-            closeClearModal();
-            showStatus('All data cleared / تم مسح الكل', 'success');
-        };
+        window.clearAllData = () => { entries = []; saveData(); updateUI(); closeClearModal(); showStatus('Cleared / تم المسح', 'success'); };
 
-        // --- EXPORT & SHARE ---
         function generateExcelBuffer() {
-            const data = entries.map(({timestamp, ...rest}) => rest);
+            const sorted = [...entries].sort((a, b) => b.timestamp - a.timestamp);
+            const data = sorted.map(({timestamp, ...rest}) => rest);
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Records");
+            XLSX.utils.book_append_sheet(wb, ws, "Seal Records");
             return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         }
 
@@ -380,29 +357,69 @@
             const a = document.createElement("a");
             a.href = url;
             a.download = `Seal_Records_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        };
+
+        window.handleShare = async () => {
+            if (entries.length === 0) return;
+            
+            const buffer = generateExcelBuffer();
+            const dateStr = new Date().toISOString().split('T')[0];
+            const fileName = `Seal_Records_${dateStr}.xlsx`;
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const file = new File([blob], fileName, { type: blob.type });
+
+            // Attempt System Share first
+            try {
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Seal Records Report / تقرير الأختام',
+                        text: 'Attached is the updated Container Seal Records Report.'
+                    });
+                    return; 
+                }
+            } catch (err) {
+                console.warn('System share blocked or not supported.');
+            }
+            
+            // If native share is not possible, just open the manual modal
+            openShareModal();
+        };
+
+        function formatTextSummary() {
+            let text = "📦 SEAL RECORDS REPORT\n";
+            entries.slice(0, 10).forEach(e => {
+                text += `- Staff ${e['Staff ID']} | CNTR ${e['Container No']} | Seals ${e['Old Seal']} -> ${e['New Seal']}\n`;
+            });
+            if (entries.length > 10) text += `... and ${entries.length - 10} more.`;
+            return text;
+        }
+
+        window.copySummary = () => {
+            const text = formatTextSummary();
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showStatus('Summary copied! / تم نسخ الملخص', 'success');
+            } catch (err) {
+                showStatus('Could not copy / فشل النسخ', 'error');
+            }
+            document.body.removeChild(textArea);
+            closeShareModal();
         };
 
         window.openShareModal = () => document.getElementById('shareModal').classList.add('active');
         window.closeShareModal = () => document.getElementById('shareModal').classList.remove('active');
         
-        window.shareData = async (type) => {
-            if (entries.length === 0) return;
-            const buffer = generateExcelBuffer();
-            const fileName = `Seal_Records_${new Date().toISOString().split('T')[0]}.xlsx`;
-            const file = new File([buffer], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({ files: [file], title: 'Seal Records', text: 'Seal Records Report' });
-                    closeShareModal();
-                    return;
-                } catch (err) { if (err.name !== 'AbortError') console.error('Share failed:', err); }
-            }
-
-            let text = "📦 SEAL RECORDS REPORT\n";
-            entries.slice(0, 5).forEach(e => text += `- ${e['Container No']}: ${e['Old Seal']} -> ${e['New Seal']}\n`);
+        window.shareData = (type) => {
+            const text = formatTextSummary();
             const encoded = encodeURIComponent(text);
             if (type === 'whatsapp') window.open(`https://wa.me/?text=${encoded}`, '_blank');
             else window.open(`mailto:?subject=Seal Records Report&body=${encoded}`, '_self');
@@ -419,30 +436,12 @@
 
         window.clearField = (id) => document.getElementById(id).value = '';
 
-        // --- INITIALIZATION ---
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('recordDate').value = today;
-
         loadData();
-
-        // Activity Tracking for Auto-lock
-        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
-            document.addEventListener(event, resetInactivityTimer, true);
-        });
-
-        // Add Enter key listener for login
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && document.getElementById('lockScreen').classList.contains('active')) {
-                handleLogin();
-            }
-        });
-
-        // Handle initial lock state (Always lock on fresh load or if previously locked)
-        if (localStorage.getItem('app_locked') !== 'false') {
-            lockApp();
-        } else {
-            resetInactivityTimer();
-        }
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(e => document.addEventListener(e, resetInactivityTimer, true));
+        document.addEventListener('keypress', (e) => { if (e.key === 'Enter' && document.getElementById('lockScreen').classList.contains('active')) handleLogin(); });
+        if (localStorage.getItem('app_locked') !== 'false') lockApp();
     </script>
 </body>
 </html>
