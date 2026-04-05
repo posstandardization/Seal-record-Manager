@@ -188,7 +188,7 @@
 
     <!-- Login Modal -->
     <div id="lockScreen" class="modal-overlay">
-        <div class="text-center p-8 flex flex-col items-center w-full max-sm-sm">
+        <div class="text-center p-8 flex flex-col items-center w-full max-w-sm">
             <div class="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             </div>
@@ -221,37 +221,40 @@
         </div>
     </div>
 
-    <!-- Share Options Modal -->
+    <!-- Share Menu Modal -->
     <div id="shareModal" class="modal-overlay">
         <div class="bg-white p-8 rounded-2xl max-w-sm w-full mx-4 shadow-2xl">
             <h3 class="text-xl font-bold mb-4 text-center text-gray-800">SHARE OPTIONS / خيارات المشاركة</h3>
             
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                <p class="text-[10px] text-blue-800 font-bold mb-1">Notice / تنبيه:</p>
-                <p class="text-[10px] text-blue-700 leading-relaxed">
-                    If direct sharing is blocked by the browser, use the manual options below:<br>
-                    إذا تم حظر المشاركة المباشرة، استخدم الخيارات اليدوية أدناه:
-                </p>
-            </div>
-
             <div class="space-y-3">
-                <button onclick="exportToExcel(); closeShareModal();" class="w-full btn btn-success">
+                <!-- Direct Excel Share -->
+                <button onclick="shareExcelFile()" class="w-full btn btn-info py-4 border-2 border-sky-600 shadow-lg">
+                    <span class="text-lg">SHARE EXCEL SHEET</span>
+                    <span class="text-xs">مشاركة ملف الإكسل</span>
+                </button>
+
+                <div class="relative py-4">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-500">Other / أخرى</span></div>
+                </div>
+
+                <button onclick="exportToExcel();" class="w-full btn btn-success">
                     <span>DOWNLOAD EXCEL</span>
                     <span>تحميل ملف إكسل</span>
                 </button>
-                <button onclick="copySummary()" class="w-full btn btn-warning">
-                    <span>COPY SUMMARY</span>
-                    <span>نسخ الملخص</span>
-                </button>
-                <button onclick="shareData('whatsapp')" class="w-full btn bg-[#25D366] text-white">
-                    <span>WHATSAPP</span>
-                    <span>واتساب</span>
-                </button>
-                <button onclick="shareData('email')" class="w-full btn bg-gray-800 text-white">
-                    <span>EMAIL</span>
-                    <span>بريد إلكتروني</span>
-                </button>
-                <button onclick="closeShareModal()" class="w-full btn bg-gray-100 text-gray-600">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="shareData('whatsapp')" class="btn bg-[#25D366] text-white">
+                        <span>WHATSAPP</span>
+                        <span>واتساب</span>
+                    </button>
+                    <button onclick="shareData('email')" class="btn bg-gray-800 text-white">
+                        <span>EMAIL</span>
+                        <span>بريد إلكتروني</span>
+                    </button>
+                </div>
+                
+                <button onclick="closeShareModal()" class="w-full btn bg-gray-100 text-gray-600 mt-2">
                     <span>CLOSE / إغلاق</span>
                 </button>
             </div>
@@ -345,7 +348,7 @@
             const data = sorted.map(({timestamp, ...rest}) => rest);
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Seal Records");
+            XLSX.utils.book_append_sheet(wb, ws, "Records");
             return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         }
 
@@ -363,56 +366,42 @@
             URL.revokeObjectURL(url);
         };
 
-        window.handleShare = async () => {
+        function formatTextSummary() {
+            let text = "📦 SEAL RECORDS REPORT\n";
+            entries.slice(0, 10).forEach(e => {
+                text += `- Staff ${e['Staff ID']} | CNTR ${e['Container No']} | Seals ${e['Old Seal']} -> ${e['New Seal']}\n`;
+            });
+            if (entries.length > 10) text += `... and more.`;
+            return text;
+        }
+
+        window.handleShare = () => {
             if (entries.length === 0) return;
-            
+            openShareModal();
+        };
+
+        window.shareExcelFile = async () => {
             const buffer = generateExcelBuffer();
             const dateStr = new Date().toISOString().split('T')[0];
             const fileName = `Seal_Records_${dateStr}.xlsx`;
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const file = new File([blob], fileName, { type: blob.type });
 
-            // Attempt System Share first
-            try {
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.share) {
+                try {
+                    // Force sharing just the file array which is more supported on mobile
                     await navigator.share({
                         files: [file],
-                        title: 'Seal Records Report / تقرير الأختام',
-                        text: 'Attached is the updated Container Seal Records Report.'
+                        title: 'Seal Records Report'
                     });
-                    return; 
+                    closeShareModal();
+                } catch (err) {
+                    console.warn('Share error:', err.message);
+                    showStatus('Share blocked by browser. Try Download.', 'error');
                 }
-            } catch (err) {
-                console.warn('System share blocked or not supported.');
+            } else {
+                showStatus('Browser does not support sharing.', 'error');
             }
-            
-            // If native share is not possible, just open the manual modal
-            openShareModal();
-        };
-
-        function formatTextSummary() {
-            let text = "📦 SEAL RECORDS REPORT\n";
-            entries.slice(0, 10).forEach(e => {
-                text += `- Staff ${e['Staff ID']} | CNTR ${e['Container No']} | Seals ${e['Old Seal']} -> ${e['New Seal']}\n`;
-            });
-            if (entries.length > 10) text += `... and ${entries.length - 10} more.`;
-            return text;
-        }
-
-        window.copySummary = () => {
-            const text = formatTextSummary();
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showStatus('Summary copied! / تم نسخ الملخص', 'success');
-            } catch (err) {
-                showStatus('Could not copy / فشل النسخ', 'error');
-            }
-            document.body.removeChild(textArea);
-            closeShareModal();
         };
 
         window.openShareModal = () => document.getElementById('shareModal').classList.add('active');
