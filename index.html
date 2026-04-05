@@ -309,7 +309,7 @@
             const data = sorted.map(({timestamp, ...rest}) => rest);
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Seal Records");
+            XLSX.utils.book_append_sheet(wb, ws, "Records");
             return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         }
 
@@ -327,7 +327,7 @@
             URL.revokeObjectURL(url);
         };
 
-        // Aggressive Native Share Trigger
+        // Aggressive Native Share Trigger with fallback detection
         window.handleShare = async () => {
             if (entries.length === 0) return;
             
@@ -339,29 +339,38 @@
 
             if (navigator.share) {
                 try {
-                    // This should trigger the native device picker (WhatsApp, Email, etc.)
-                    await navigator.share({
-                        files: [file],
-                        title: 'Seal Records Sheet',
-                        text: 'Container Seal Records Excel Sheet'
-                    });
+                    // Check if file sharing is allowed for this specific file type
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Seal Records Sheet',
+                            text: 'Container Seal Records Excel Sheet'
+                        });
+                    } else {
+                        throw new Error('File share not supported by this specific browser/context');
+                    }
                 } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        console.warn('Share blocked:', err.message);
-                        showStatus('Browser blocked share menu. Please use EXCEL button.', 'error');
+                    // Detailed handling for Permission Denied (common in iframes)
+                    if (err.name === 'NotAllowedError' || err.message.includes('Permission denied')) {
+                        showStatus('SHARE BLOCKED: The security settings of this window prevent direct sharing. Please use the EXCEL button to download and share manually.', 'error');
+                    } else if (err.name !== 'AbortError') {
+                        console.warn('Share error:', err.message);
+                        showStatus('Browser blocked share menu. Please use the EXCEL button to download and share.', 'error');
                     }
                 }
             } else {
-                showStatus('Browser does not support direct sharing.', 'error');
+                showStatus('Browser does not support direct sharing. Use EXCEL button.', 'error');
             }
         };
 
         window.showStatus = (m, t) => {
             const el = document.getElementById('statusMsg');
             el.innerText = m;
+            // Using a longer timeout for error messages so the user can read them
+            const duration = t === 'error' ? 8000 : 4000;
             el.className = `mb-4 p-3 rounded-lg text-center text-sm font-bold shadow-md transition-all ${t === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 4000);
+            setTimeout(() => el.classList.add('hidden'), duration);
         };
 
         window.clearField = (id) => document.getElementById(id).value = '';
