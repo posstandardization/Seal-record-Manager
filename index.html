@@ -8,9 +8,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+        
         body {
             background-color: #f3f4f6;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', 'Noto+Sans+Arabic', sans-serif;
             overscroll-behavior-y: contain;
         }
         .card {
@@ -23,10 +25,10 @@
             padding: 0.75rem;
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
             outline: none;
             transition: border-color 0.2s;
-            font-size: 16px; /* Prevents auto-zoom on iOS */
+            font-size: 16px;
         }
         .input-field:focus {
             border-color: #2563eb;
@@ -35,129 +37,228 @@
         
         .uppercase-input { text-transform: uppercase; }
         
-        .btn-primary {
-            background-color: #2563eb;
-            color: white;
-            padding: 0.75rem 1.5rem;
+        .btn {
+            padding: 0.75rem 1.25rem;
             border-radius: 0.5rem;
             font-weight: 600;
             transition: all 0.2s;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            line-height: 1.2;
         }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn span:last-child { font-size: 0.75rem; font-weight: normal; }
         
-        .table-container { max-height: 500px; overflow-y: auto; }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-info { background-color: #0ea5e9; color: white; }
+        .btn-warning { background-color: #f59e0b; color: white; }
         
-        #shareModal {
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .table-container { max-height: 400px; overflow-y: auto; }
+        
+        /* Modal Styles */
+        .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             align-items: center;
             justify-content: center;
-            z-index: 50;
-            backdrop-filter: blur(4px);
+            z-index: 100;
+            backdrop-filter: blur(8px);
         }
-        #shareModal.active { display: flex; }
+        .modal-overlay.active { display: flex; }
+        
+        #lockScreen { background: #1e293b; color: white; }
     </style>
 </head>
 <body class="p-4 md:p-8">
     <div class="max-w-4xl mx-auto">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-800">Seal Record System</h1>
-            <p class="text-sm text-gray-500 font-medium italic mt-1">Local Session Mode (No Cloud Storage)</p>
+        <header class="mb-6 flex justify-between items-start">
+            <div class="text-left">
+                <h1 class="text-2xl font-bold text-gray-800">Seal Record System</h1>
+                <p class="text-xs text-gray-500 font-medium italic">نظام تسجيل الأختام</p>
+            </div>
+            <button onclick="lockApp()" class="btn btn-warning py-2">
+                <span>LOCK</span>
+                <span>قفل</span>
+            </button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <!-- Container No. -->
-            <div class="card p-6">
-                <label class="block font-semibold text-gray-700">Container No.</label>
+            <div class="card p-4">
+                <label class="block font-semibold text-gray-700 text-sm">Container No. / رقم الحاوية</label>
                 <input type="text" id="containerNo" class="input-field uppercase-input" placeholder="e.g. MSCU1234567">
-                <button onclick="clearField('containerNo')" class="mt-2 text-xs text-blue-600 hover:underline">Clear</button>
+                <button onclick="clearField('containerNo')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
             </div>
 
             <!-- Old Seal -->
-            <div class="card p-6">
-                <label class="block font-semibold text-gray-700">Old Seal</label>
+            <div class="card p-4">
+                <label class="block font-semibold text-gray-700 text-sm">Old Seal / الختم القديم</label>
                 <input type="text" id="oldSeal" class="input-field uppercase-input" placeholder="Old Seal ID">
-                <button onclick="clearField('oldSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear</button>
+                <button onclick="clearField('oldSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
             </div>
 
             <!-- New Seal -->
-            <div class="card p-6">
-                <label class="block font-semibold text-gray-700">New Seal</label>
+            <div class="card p-4">
+                <label class="block font-semibold text-gray-700 text-sm">New Seal / الختم الجديد</label>
                 <input type="text" id="newSeal" class="input-field uppercase-input" placeholder="New Seal ID">
-                <button onclick="clearField('newSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear</button>
+                <button onclick="clearField('newSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear / مسح</button>
             </div>
         </div>
 
-        <div class="card p-6 mb-8">
+        <div class="card p-5 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-600">Date</label>
+                    <label class="block text-sm font-medium text-gray-600">Date / التاريخ</label>
                     <input type="date" id="recordDate" class="input-field">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-600">Shift</label>
+                    <label class="block text-sm font-medium text-gray-600">Shift / الوردية</label>
                     <select id="shift" class="input-field">
-                        <option value="1">Shift 1</option>
-                        <option value="2">Shift 2</option>
-                        <option value="3">Shift 3</option>
-                        <option value="4">Shift 4</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
                     </select>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2 justify-center md:justify-end mt-4">
-                <button onclick="addEntry()" id="addBtn" class="btn-primary min-w-[140px]">Save Record</button>
-                <button onclick="exportToExcel()" id="exportBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50" disabled>Excel</button>
-                <button onclick="openShareModal()" id="shareBtn" class="bg-sky-500 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50" disabled>Share</button>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-6">
+                <button onclick="addEntry()" id="addBtn" class="btn btn-primary col-span-2 md:col-span-1">
+                    <span>SAVE</span>
+                    <span>حفظ</span>
+                </button>
+                <button onclick="exportToExcel()" id="exportBtn" class="btn btn-success disabled:opacity-50" disabled>
+                    <span>EXCEL</span>
+                    <span>إكسل</span>
+                </button>
+                <button onclick="openShareModal()" id="shareBtn" class="btn btn-info disabled:opacity-50" disabled>
+                    <span>SHARE</span>
+                    <span>مشاركة</span>
+                </button>
+                <button onclick="confirmClearAll()" class="btn btn-danger">
+                    <span>CLEAR ALL</span>
+                    <span>مسح الكل</span>
+                </button>
             </div>
         </div>
 
         <div id="statusMsg" class="hidden mb-4 p-3 rounded-lg text-center font-medium shadow-sm transition-all duration-300"></div>
 
-        <div class="card p-6">
+        <div class="card p-5">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-gray-700">Record List</h2>
+                <h2 class="text-lg font-bold text-gray-700">Records / السجلات</h2>
                 <span id="recordCount" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">0 Records</span>
             </div>
             <div class="table-container">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-gray-50 sticky top-0">
                         <tr>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">DATE/SHIFT</th>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">CONTAINER</th>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">OLD SEAL</th>
-                            <th class="p-3 border-b text-xs font-bold text-gray-600">NEW SEAL</th>
+                            <th class="p-3 border-b text-xs font-bold text-gray-600">DATE/SHIFT التاريخ والوردية</th>
+                            <th class="p-3 border-b text-xs font-bold text-gray-600">CONTAINER الحاوية</th>
+                            <th class="p-3 border-b text-xs font-bold text-gray-600">OLD SEAL الختم القديم</th>
+                            <th class="p-3 border-b text-xs font-bold text-gray-600">NEW SEAL الختم الجديد</th>
                         </tr>
                     </thead>
                     <tbody id="entriesTableBody" class="text-sm"></tbody>
                 </table>
             </div>
-            <div id="emptyState" class="text-center py-8 text-gray-400">No records in this session.</div>
+            <div id="emptyState" class="text-center py-8 text-gray-400">No records found. / لا توجد سجلات.</div>
+        </div>
+    </div>
+
+    <!-- Lock Screen Modal -->
+    <div id="lockScreen" class="modal-overlay">
+        <div class="text-center p-8 flex flex-col items-center">
+            <div class="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold mb-2">APP LOCKED</h2>
+            <p class="text-slate-400 mb-8">التطبيق مقفل</p>
+            <button onclick="unlockApp()" class="btn btn-warning px-12 py-4 text-lg">
+                <span>UNLOCK</span>
+                <span>فتح القفل</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Clear Confirmation Modal -->
+    <div id="clearModal" class="modal-overlay">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-center">
+            <div class="text-red-500 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">CAUTION / تنبيه</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete ALL records? This cannot be undone.<br><br>هل أنت متأكد من مسح جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <div class="flex gap-3">
+                <button onclick="clearAllData()" class="flex-1 btn btn-danger">YES / نعم</button>
+                <button onclick="closeClearModal()" class="flex-1 btn bg-gray-200 text-gray-700">NO / لا</button>
+            </div>
         </div>
     </div>
 
     <!-- Share Modal -->
-    <div id="shareModal">
+    <div id="shareModal" class="modal-overlay">
         <div class="bg-white p-8 rounded-2xl max-w-sm w-full mx-4 shadow-2xl">
-            <h3 class="text-xl font-bold mb-2 text-gray-800">Share Records</h3>
-            <div class="space-y-3 mt-4">
-                <button onclick="shareData('whatsapp')" class="w-full py-3 bg-[#25D366] text-white rounded-lg font-bold">WhatsApp</button>
-                <button onclick="shareData('email')" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold">Email</button>
-                <button onclick="closeShareModal()" class="w-full py-3 bg-gray-100 text-gray-600 rounded-lg font-bold">Cancel</button>
+            <h3 class="text-xl font-bold mb-2 text-center">SHARE / مشاركة</h3>
+            <div class="space-y-3 mt-6">
+                <button onclick="shareData('whatsapp')" class="w-full btn bg-[#25D366] text-white">
+                    <span>WhatsApp / واتساب</span>
+                </button>
+                <button onclick="shareData('email')" class="w-full btn bg-gray-800 text-white">
+                    <span>Email / بريد إلكتروني</span>
+                </button>
+                <button onclick="closeShareModal()" class="w-full btn bg-gray-100 text-gray-600">
+                    <span>Cancel / إلغاء</span>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
         let entries = [];
+        let inactivityTimer;
+        const INACTIVITY_LIMIT = 120000; // 2 minutes
 
-        // --- LOCAL DATA LOGIC ---
+        // --- PERSISTENCE ---
+        function loadData() {
+            const saved = localStorage.getItem('seal_records');
+            if (saved) {
+                entries = JSON.parse(saved);
+                updateUI();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('seal_records', JSON.stringify(entries));
+        }
+
+        // --- LOCK LOGIC ---
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            if (!document.getElementById('lockScreen').classList.contains('active')) {
+                inactivityTimer = setTimeout(lockApp, INACTIVITY_LIMIT);
+            }
+        }
+
+        function lockApp() {
+            document.getElementById('lockScreen').classList.add('active');
+            localStorage.setItem('app_locked', 'true');
+        }
+
+        function unlockApp() {
+            document.getElementById('lockScreen').classList.remove('active');
+            localStorage.setItem('app_locked', 'false');
+            resetInactivityTimer();
+        }
+
+        // --- ENTRY LOGIC ---
         window.addEntry = () => {
             const container = document.getElementById('containerNo').value.trim().toUpperCase();
             const oldS = document.getElementById('oldSeal').value.trim().toUpperCase();
@@ -166,7 +267,7 @@
             const shift = document.getElementById('shift').value;
 
             if (!container || !oldS || !newS || !date) {
-                showStatus('Please fill all fields before saving.', 'error');
+                showStatus('Missing fields! / حقول ناقصة', 'error');
                 return;
             }
 
@@ -180,12 +281,11 @@
             };
 
             entries.unshift(newEntry);
+            saveData();
             
-            // Clear fields
             ['containerNo', 'oldSeal', 'newSeal'].forEach(id => document.getElementById(id).value = '');
-            
             updateUI();
-            showStatus('Record added to list!', 'success');
+            showStatus('Saved! / تم الحفظ', 'success');
         };
 
         function updateUI() {
@@ -206,34 +306,68 @@
                     const tr = document.createElement('tr');
                     tr.className = "border-b hover:bg-gray-50 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 text-gray-500">${e.Date}<br><span class="text-xs font-bold text-gray-400">Shift ${e.Shift}</span></td>
+                        <td class="p-3 text-gray-500">${e.Date}<br><span class="text-[10px] font-bold text-gray-400">Shift ${e.Shift}</span></td>
                         <td class="p-3 font-bold text-gray-800">${e['Container No']}</td>
                         <td class="p-3 text-gray-600 font-mono">${e['Old Seal']}</td>
-                        <td class="p-3 text-gray-600 font-mono">${e['New Seal']}</td>
+                        <td class="p-3 text-blue-600 font-mono font-semibold">${e['New Seal']}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             }
         }
 
-        window.exportToExcel = () => {
-            if (entries.length === 0) return;
+        // --- CLEAR ALL LOGIC ---
+        window.confirmClearAll = () => document.getElementById('clearModal').classList.add('active');
+        window.closeClearModal = () => document.getElementById('clearModal').classList.remove('active');
+        
+        window.clearAllData = () => {
+            entries = [];
+            saveData();
+            updateUI();
+            closeClearModal();
+            showStatus('All data cleared / تم مسح الكل', 'success');
+        };
+
+        // --- EXPORT & SHARE ---
+        function generateExcelBuffer() {
             const data = entries.map(({timestamp, ...rest}) => rest);
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Records");
-            XLSX.writeFile(wb, `Seal_Records_${new Date().toISOString().split('T')[0]}.xlsx`);
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        }
+
+        window.exportToExcel = () => {
+            if (entries.length === 0) return;
+            const buffer = generateExcelBuffer();
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Seal_Records_${new Date().toISOString().split('T')[0]}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
         };
 
         window.openShareModal = () => document.getElementById('shareModal').classList.add('active');
         window.closeShareModal = () => document.getElementById('shareModal').classList.remove('active');
         
-        window.shareData = (type) => {
+        window.shareData = async (type) => {
             if (entries.length === 0) return;
+            const buffer = generateExcelBuffer();
+            const fileName = `Seal_Records_${new Date().toISOString().split('T')[0]}.xlsx`;
+            const file = new File([buffer], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: 'Seal Records', text: 'Seal Records Report' });
+                    closeShareModal();
+                    return;
+                } catch (err) { if (err.name !== 'AbortError') console.error('Share failed:', err); }
+            }
+
             let text = "📦 SEAL RECORDS REPORT\n";
-            entries.slice(0, 10).forEach(e => text += `- ${e['Container No']}: ${e['Old Seal']} -> ${e['New Seal']}\n`);
-            if (entries.length > 10) text += `... and ${entries.length - 10} more.`;
-            
+            entries.slice(0, 5).forEach(e => text += `- ${e['Container No']}: ${e['Old Seal']} -> ${e['New Seal']}\n`);
             const encoded = encodeURIComponent(text);
             if (type === 'whatsapp') window.open(`https://wa.me/?text=${encoded}`, '_blank');
             else window.open(`mailto:?subject=Seal Records Report&body=${encoded}`, '_self');
@@ -245,14 +379,28 @@
             el.innerText = m;
             el.className = `mb-4 p-3 rounded-lg text-center text-sm font-bold shadow-md transition-all ${t === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 4000);
+            setTimeout(() => el.classList.add('hidden'), 3000);
         };
 
         window.clearField = (id) => document.getElementById(id).value = '';
 
-        // Initialization
+        // --- INITIALIZATION ---
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('recordDate').value = today;
+
+        loadData();
+
+        // Activity Tracking for Auto-lock
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, resetInactivityTimer, true);
+        });
+
+        // Handle initial lock state
+        if (localStorage.getItem('app_locked') === 'true') {
+            lockApp();
+        } else {
+            resetInactivityTimer();
+        }
     </script>
 </body>
 </html>
