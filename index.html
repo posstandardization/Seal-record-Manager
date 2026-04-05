@@ -13,6 +13,7 @@
         body {
             background-color: #f3f4f6;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overscroll-behavior-y: contain;
         }
         .card {
             background: white;
@@ -25,12 +26,13 @@
         .input-field {
             width: 100%;
             padding: 0.75rem;
-            padding-right: 3rem; /* Space for the scan button */
+            padding-right: 3rem; 
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             margin-top: 0.5rem;
             outline: none;
             transition: border-color 0.2s;
+            font-size: 16px; /* Prevents auto-zoom on iOS */
         }
         .input-field:focus {
             border-color: #2563eb;
@@ -41,6 +43,7 @@
             right: 0.75rem;
             bottom: 0.75rem;
             color: #6b7280;
+            padding: 4px;
             transition: color 0.2s;
         }
         .scan-btn:hover { color: #2563eb; }
@@ -54,8 +57,13 @@
             border-radius: 0.5rem;
             font-weight: 600;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .table-container { max-height: 500px; overflow-y: auto; }
 
@@ -75,15 +83,17 @@
             width: 100%;
             max-width: 500px;
             height: auto;
-            border: 2px solid white;
+            max-height: 70vh;
+            background: #222;
         }
         .scan-guide {
             position: absolute;
             width: 80%;
-            height: 100px;
+            height: 80px;
             border: 2px dashed #10b981;
             pointer-events: none;
             z-index: 110;
+            box-shadow: 0 0 0 4000px rgba(0,0,0,0.3);
         }
         
         #shareModal {
@@ -97,27 +107,16 @@
             backdrop-filter: blur(4px);
         }
         #shareModal.active { display: flex; }
-
-        .spinner {
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            width: 18px;
-            height: 18px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-4 md:p-8">
     <div class="max-w-4xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-gray-800">Seal Record System</h1>
-            <p id="connectionStatus" class="text-sm text-gray-500 italic mt-1">Connecting to secure storage...</p>
+            <p class="text-sm text-gray-500 font-medium italic mt-1">Local Session Mode (No Cloud Storage)</p>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Container No Input -->
             <div class="card p-6">
                 <label class="block font-semibold text-gray-700">Container No.</label>
                 <div class="input-group">
@@ -129,7 +128,6 @@
                 <button onclick="clearField('containerNo')" class="mt-2 text-xs text-blue-600 hover:underline">Clear</button>
             </div>
 
-            <!-- Old Seal Input -->
             <div class="card p-6">
                 <label class="block font-semibold text-gray-700">Old Seal</label>
                 <div class="input-group">
@@ -141,7 +139,6 @@
                 <button onclick="clearField('oldSeal')" class="mt-2 text-xs text-blue-600 hover:underline">Clear</button>
             </div>
 
-            <!-- New Seal Input -->
             <div class="card p-6">
                 <label class="block font-semibold text-gray-700">New Seal</label>
                 <div class="input-group">
@@ -154,7 +151,6 @@
             </div>
         </div>
 
-        <!-- Action Section -->
         <div class="card p-6 mb-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -172,17 +168,17 @@
                 </div>
             </div>
             <div class="flex flex-wrap gap-2 justify-center md:justify-end mt-4">
-                <button onclick="addEntry()" id="addBtn" class="btn-primary px-8 flex items-center gap-2">Save Record</button>
-                <button onclick="exportToExcel()" id="exportBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold opacity-50 cursor-not-allowed" disabled>Excel</button>
-                <button onclick="openShareModal()" id="shareBtn" class="bg-sky-500 text-white px-6 py-3 rounded-lg font-bold opacity-50 cursor-not-allowed" disabled>Share</button>
+                <button onclick="addEntry()" id="addBtn" class="btn-primary min-w-[140px]">Save Record</button>
+                <button onclick="exportToExcel()" id="exportBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50" disabled>Excel</button>
+                <button onclick="openShareModal()" id="shareBtn" class="bg-sky-500 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50" disabled>Share</button>
             </div>
         </div>
 
-        <div id="statusMsg" class="hidden mb-4 p-3 rounded-lg text-center font-medium shadow-sm"></div>
+        <div id="statusMsg" class="hidden mb-4 p-3 rounded-lg text-center font-medium shadow-sm transition-all duration-300"></div>
 
         <div class="card p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-gray-700">Recent Records</h2>
+                <h2 class="text-lg font-bold text-gray-700">Record List</h2>
                 <span id="recordCount" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">0 Records</span>
             </div>
             <div class="table-container">
@@ -198,19 +194,19 @@
                     <tbody id="entriesTableBody" class="text-sm"></tbody>
                 </table>
             </div>
-            <div id="emptyState" class="text-center py-8 text-gray-400">Loading records...</div>
+            <div id="emptyState" class="text-center py-8 text-gray-400">No records in this session.</div>
         </div>
     </div>
 
-    <!-- Fullscreen Scanner Overlay -->
+    <!-- Scanner Overlay -->
     <div id="scannerOverlay">
-        <video id="videoFeed" autoplay playsinline></video>
+        <video id="videoFeed" autoplay playsinline muted></video>
         <div class="scan-guide"></div>
-        <div class="absolute bottom-10 flex flex-col items-center gap-4 w-full">
-            <p id="scannerStatus" class="text-white text-sm bg-black/50 px-4 py-2 rounded">Align text within the box</p>
+        <div class="absolute bottom-10 flex flex-col items-center gap-4 w-full px-6 text-center">
+            <p id="scannerStatus" class="text-white text-sm bg-black/60 px-4 py-2 rounded-full backdrop-blur-sm">Align text in box and hold steady</p>
             <div class="flex gap-4">
-                <button onclick="captureImage()" id="captureBtn" class="bg-white text-black px-8 py-3 rounded-full font-bold">CAPTURE</button>
-                <button onclick="stopScanner()" class="bg-red-500 text-white px-8 py-3 rounded-full font-bold">CANCEL</button>
+                <button onclick="captureImage()" id="captureBtn" class="bg-white text-black px-10 py-3 rounded-full font-bold shadow-lg">CAPTURE</button>
+                <button onclick="stopScanner()" class="bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-lg">CANCEL</button>
             </div>
         </div>
         <canvas id="captureCanvas" style="display:none;"></canvas>
@@ -228,42 +224,41 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        let db, auth, user, entries = [];
+    <script>
+        let entries = [];
         let activeTargetId = null;
         let stream = null;
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'seal-record-app';
-
-        // 1. Scanner Logic
+        // --- SCANNER LOGIC ---
         window.startScanner = async (targetId) => {
             activeTargetId = targetId;
             const overlay = document.getElementById('scannerOverlay');
             const video = document.getElementById('videoFeed');
 
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment', focusMode: 'continuous' } 
-                });
+                // Specific constraints for mobile back cameras
+                const constraints = { 
+                    video: { 
+                        facingMode: "environment",
+                        focusMode: 'continuous'
+                    } 
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 overlay.classList.add('active');
+                await video.play();
+                
             } catch (err) {
-                console.error(err);
-                alert("Could not access camera. Please check permissions.");
+                console.error("Camera error:", err);
+                showStatus("Camera access denied or unavailable.", "error");
             }
         };
 
         window.stopScanner = () => {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
+                stream = null;
             }
             document.getElementById('scannerOverlay').classList.remove('active');
             activeTargetId = null;
@@ -272,95 +267,63 @@
         window.captureImage = async () => {
             const video = document.getElementById('videoFeed');
             const canvas = document.getElementById('captureCanvas');
-            const ctx = canvas.getContext('2d');
             const status = document.getElementById('scannerStatus');
             const captureBtn = document.getElementById('captureBtn');
 
-            // Capture the current frame
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(video, 0, 0);
 
-            // OCR Processing
             captureBtn.disabled = true;
-            status.innerText = "Processing text... Please wait.";
+            status.innerText = "Scanning text...";
             
             try {
-                const result = await Tesseract.recognize(canvas, 'eng', {
-                    logger: m => console.log(m)
-                });
-                
-                // Clean the text: uppercase, remove newlines, remove special characters
+                const result = await Tesseract.recognize(canvas, 'eng');
                 let text = result.data.text.toUpperCase().replace(/[^A-Z0-9]/g, '');
                 
-                if (text.length > 0) {
+                if (text.length > 2) {
                     document.getElementById(activeTargetId).value = text;
-                    showStatus(`Successfully scanned: ${text}`, 'success');
+                    showStatus(`Scanned: ${text}`, 'success');
                     stopScanner();
                 } else {
-                    status.innerText = "Could not read text. Try again.";
+                    status.innerText = "Text not clear. Try again.";
                 }
             } catch (err) {
-                console.error(err);
-                status.innerText = "Error scanning. Try again.";
+                status.innerText = "OCR Error. Try manual entry.";
             } finally {
                 captureBtn.disabled = false;
             }
         };
 
-        // 2. Auth & Firestore Logic
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-
-        onAuthStateChanged(auth, (u) => {
-            user = u;
-            if (user) {
-                document.getElementById('connectionStatus').innerText = "Storage Active";
-                document.getElementById('connectionStatus').className = "text-sm text-green-600 font-bold mt-1";
-                subscribeToRecords();
-            }
-        });
-
-        const subscribeToRecords = () => {
-            const recordsCol = collection(db, 'artifacts', appId, 'public', 'data', 'sealRecords');
-            onSnapshot(recordsCol, (snap) => {
-                entries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                entries.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                updateUI();
-            });
-        };
-
-        window.addEntry = async () => {
-            if (!user) return;
+        // --- LOCAL DATA LOGIC ---
+        window.addEntry = () => {
             const container = document.getElementById('containerNo').value.trim().toUpperCase();
             const oldS = document.getElementById('oldSeal').value.trim().toUpperCase();
             const newS = document.getElementById('newSeal').value.trim().toUpperCase();
             const date = document.getElementById('recordDate').value;
             const shift = document.getElementById('shift').value;
 
-            if (!container || !oldS || !newS) {
-                showStatus('Missing fields.', 'error');
+            if (!container || !oldS || !newS || !date) {
+                showStatus('Please fill all fields before saving.', 'error');
                 return;
             }
 
-            const btn = document.getElementById('addBtn');
-            btn.disabled = true;
-            btn.innerText = "Saving...";
+            const newEntry = { 
+                Date: date, 
+                Shift: shift, 
+                'Container No': container, 
+                'Old Seal': oldS, 
+                'New Seal': newS,
+                timestamp: Date.now()
+            };
 
-            try {
-                const col = collection(db, 'artifacts', appId, 'public', 'data', 'sealRecords');
-                await addDoc(col, { Date: date, Shift: shift, 'Container No': container, 'Old Seal': oldS, 'New Seal': newS, createdAt: serverTimestamp() });
-                ['containerNo', 'oldSeal', 'newSeal'].forEach(id => document.getElementById(id).value = '');
-                showStatus('Saved to cloud.', 'success');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Save Record";
-            }
+            entries.unshift(newEntry);
+            
+            // Clear fields
+            ['containerNo', 'oldSeal', 'newSeal'].forEach(id => document.getElementById(id).value = '');
+            
+            updateUI();
+            showStatus('Record added to list!', 'success');
         };
 
         function updateUI() {
@@ -369,25 +332,22 @@
             tbody.innerHTML = '';
             document.getElementById('recordCount').innerText = `${entries.length} Records`;
             
-            if (entries.length === 0) {
+            const hasData = entries.length > 0;
+            document.getElementById('exportBtn').disabled = !hasData;
+            document.getElementById('shareBtn').disabled = !hasData;
+            
+            if (!hasData) {
                 empty.classList.remove('hidden');
-                document.getElementById('exportBtn').disabled = true;
-                document.getElementById('shareBtn').disabled = true;
             } else {
                 empty.classList.add('hidden');
-                document.getElementById('exportBtn').disabled = false;
-                document.getElementById('shareBtn').disabled = false;
-                document.getElementById('exportBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-                document.getElementById('shareBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-                
                 entries.forEach(e => {
                     const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50";
+                    tr.className = "border-b hover:bg-gray-50 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 text-gray-500">${e.Date}<br>Shift ${e.Shift}</td>
+                        <td class="p-3 text-gray-500">${e.Date}<br><span class="text-xs font-bold text-gray-400">Shift ${e.Shift}</span></td>
                         <td class="p-3 font-bold text-gray-800">${e['Container No']}</td>
-                        <td class="p-3 text-gray-700 font-mono">${e['Old Seal']}</td>
-                        <td class="p-3 text-gray-700 font-mono">${e['New Seal']}</td>
+                        <td class="p-3 text-gray-600 font-mono">${e['Old Seal']}</td>
+                        <td class="p-3 text-gray-600 font-mono">${e['New Seal']}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -395,7 +355,9 @@
         }
 
         window.exportToExcel = () => {
-            const data = entries.map(({id, createdAt, ...rest}) => rest);
+            if (entries.length === 0) return;
+            // Clean internal data for Excel
+            const data = entries.map(({timestamp, ...rest}) => rest);
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Records");
@@ -404,26 +366,32 @@
 
         window.openShareModal = () => document.getElementById('shareModal').classList.add('active');
         window.closeShareModal = () => document.getElementById('shareModal').classList.remove('active');
+        
         window.shareData = (type) => {
-            let text = "📦 SEAL RECORDS\n";
-            entries.slice(0, 5).forEach(e => text += `- ${e['Container No']}: ${e['Old Seal']} -> ${e['New Seal']}\n`);
+            if (entries.length === 0) return;
+            let text = "📦 SEAL RECORDS REPORT\n";
+            entries.slice(0, 10).forEach(e => text += `- ${e['Container No']}: ${e['Old Seal']} -> ${e['New Seal']}\n`);
+            if (entries.length > 10) text += `... and ${entries.length - 10} more.`;
+            
             const encoded = encodeURIComponent(text);
             if (type === 'whatsapp') window.open(`https://wa.me/?text=${encoded}`, '_blank');
-            else window.open(`mailto:?subject=Seal Records&body=${encoded}`, '_self');
+            else window.open(`mailto:?subject=Seal Records Report&body=${encoded}`, '_self');
             closeShareModal();
         };
 
         window.showStatus = (m, t) => {
             const el = document.getElementById('statusMsg');
             el.innerText = m;
-            el.className = `mb-4 p-3 rounded-lg text-center text-sm font-bold ${t === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            el.className = `mb-4 p-3 rounded-lg text-center text-sm font-bold shadow-md transition-all ${t === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 3000);
+            setTimeout(() => el.classList.add('hidden'), 4000);
         };
 
+        window.clearField = (id) => document.getElementById(id).value = '';
+
+        // Initialization
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('recordDate').value = today;
-        initAuth();
     </script>
 </body>
 </html>
