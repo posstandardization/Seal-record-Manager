@@ -118,7 +118,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1 tracking-widest">Staff ID / رقم الموظف</label>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1 tracking-widest">Staff ID / رقم الموظف (Optional)</label>
                     <input type="text" id="staffId" class="input-field font-bold" placeholder="ID NO">
                 </div>
             </div>
@@ -187,7 +187,7 @@
         </div>
     </div>
 
-    <!-- Login screen updated with Enter Key support -->
+    <!-- Login screen -->
     <div id="lockScreen" class="modal-overlay active">
         <div class="text-center p-8 w-full max-w-xs">
             <div class="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3">
@@ -243,12 +243,10 @@
             document.getElementById('lockScreen').classList.add('active');
             document.getElementById('loginPass').value = '';
             localStorage.setItem('seal_app_locked', 'true');
-            // Focus PIN input for immediate typing
             setTimeout(() => document.getElementById('loginPass').focus(), 100);
         }
 
         function handleLogin() {
-            // Default PIN is 1234
             if (document.getElementById('loginPass').value === '1234') {
                 document.getElementById('lockScreen').classList.remove('active');
                 localStorage.setItem('seal_app_locked', 'false');
@@ -265,11 +263,12 @@
             const container = document.getElementById('containerNo').value.trim().toUpperCase();
             const oldS = document.getElementById('oldSeal').value.trim().toUpperCase();
             const newS = document.getElementById('newSeal').value.trim().toUpperCase();
-            const staff = document.getElementById('staffId').value.trim();
+            const staff = document.getElementById('staffId').value.trim() || "N/A";
             const date = document.getElementById('recordDate').value;
             const shift = document.getElementById('shift').value;
 
-            if (!container || !oldS || !newS || !date || !staff) {
+            // Validation: Staff ID is removed from mandatory check
+            if (!container || !oldS || !newS || !date) {
                 showStatus('Incomplete Data / حقول ناقصة', 'error');
                 return;
             }
@@ -372,7 +371,6 @@
         document.getElementById('recordDate').value = today;
         loadData();
         
-        // Auto-focus the login input on load
         window.onload = () => {
             if (localStorage.getItem('seal_app_locked') !== 'false') {
                 lockApp();
